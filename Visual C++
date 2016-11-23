@@ -1,0 +1,348 @@
+/*
+Freelance Paint Program by Cameron Dixon and Robert Jones II
+
+This program was designed to create a makeshift paint program where the user is allowed to
+spray paint a shape in whatever color the user prefers. There is also a way for the user to
+turn off the spray paint and just post the shape in their desired color.
+
+* All shapes are made with a radius of 10 in order to leave optimal space for multiple shapes.
+* When Sprayed, shapes are small, however when spray is off, the shapes are bigger
+METHODS
+
+SprayPaint - This method is used to continuously draw shapes onto the canvas
+DrawCircle - This method creates a circle
+DrawTriangle - Draws a triangle
+DrawDiamond - Draws a diamond
+DrawC - calls the DrawCircle method at the location where the user clicks (When Spray is off)
+DrawS - Used to Draw a square when the SprayPaint function is turned off
+DrawT - calls the DrawTriangle method at the location where the user clicks (When Spray is off)
+DrawD - calls the DrawDiamond method at the location where the user clicks (When Spray is off)
+MyMouse - Gets the radius location when the SprayPaint is turned off
+MyKey - Use this function to clear the canvas by pressing "c"
+ProcessShapeEvents - Used to create the Menu for selecting shapes
+ProcessColorEvents - Creates a menu for selecting Color
+ChoosingSpary - Used to turn the spray ON or OFF (DEFAULT ON)
+ProcessMainMenu - Empty statement needed to generate a main menu
+
+
+
+
+*/
+#include <windows.h>
+#include <GL/GL.h>
+#include <GL/glu.h>
+#include <GL/glut.h>
+#include <math.h>
+
+#define RED 0
+#define GREEN 1
+#define BLUE 2
+#define YELLOW 3
+#define PURPLE 4
+#define ORANGE 5
+#define WHITE 6
+#define BLACK 7
+#define CYAN 8
+#define SQUARE 9
+#define DIAMOND 10
+#define CIRCLE 11
+#define TRIANGLE 12
+#define num10 13
+#define num25 14
+#define num50 15
+#define ON 16
+#define OFF 17
+#define PI (3.141592653589793)
+
+
+bool Square = false;
+bool Diamond = false;
+bool Circle = false;
+bool Triangle = false;
+bool SprayPaint = true;
+
+int r = 25; // radius for all shapes
+
+void myInit(void)
+{
+	glClearColor(1.0, 1.0, 1.0, 0.0); // background color - white
+	glColor3f(0.0, 0.0, 0.0);
+	glPointSize(4.0); // 4 x 4 pixels
+	glMatrixMode(GL_PROJECTION);
+	glLoadIdentity();
+	gluOrtho2D(0.0, 640.0, 0.0, 480.0); // setting up a coordinate system
+}
+
+int x;
+int y;
+
+struct GLintPoint
+{
+	GLint x, y;
+};
+
+GLintPoint T[1] = { { 0, 0 } }; // global variable to show points
+
+
+void myKey(unsigned char theKey, int mouseX, int mouseY)
+{
+	switch (theKey)
+	{
+	case 'c': case 'C':
+		glClear(GL_COLOR_BUFFER_BIT);
+		break;
+
+	default:
+		break;
+	}
+	glutPostRedisplay();
+}
+// Initialiazing the Drawing Functions
+void DrawCircle(float x, float y, int radius);
+void DrawDiamond(int x, int y, int radius);
+void DrawTriangle(int x, int y, int r);
+// Spray Painting Method
+void Spray_Paint(int x, int y)
+{
+	if (SprayPaint == true) {
+		y = 480 - y;
+		if (Diamond == true)
+			DrawDiamond(x, y, 10);
+		else if (Triangle == true)
+			DrawTriangle(x, y, 10);
+		else if (Circle == true)
+			DrawCircle(x, y, 10);
+		else {
+			glBegin(GL_POLYGON);
+			glVertex2i(x, y);
+
+			glVertex2i(x, y + 10);
+
+			glVertex2i(x + 10, y + 10);
+			glVertex2i(x + 10, y);
+			glEnd();
+
+			glFlush();
+		}
+	}
+}
+
+void DrawDiamond(int x, int y, int radius)
+{
+		glBegin(GL_POLYGON);
+
+		glVertex2i((x - radius), y);
+		glVertex2i(x, y - radius);
+
+		glVertex2i(x, y - radius);
+		glVertex2i(x + radius, y);
+
+		glVertex2i(x + radius, y);
+		glVertex2i(x, y + radius);
+
+		glVertex2i((x - radius), y);
+		glVertex2i(x, y + radius);
+		glEnd();
+
+		glFlush();
+}
+void DrawTriangle(int x, int y, int r) {
+	
+		glBegin(GL_POLYGON);
+		glVertex2i(x, y + r);
+		glVertex2i(x - r, y - r);
+		glVertex2i(x + r, y - r);
+		glEnd();
+		glFlush();
+	
+}
+void DrawCircle(float x, float y, int radius) {
+	
+		int num_triangles = 100;
+		glBegin(GL_TRIANGLE_FAN);
+		glVertex2i(x, y);
+		for (int i = 0; i <= num_triangles; i++) {
+			glVertex2i(x + (radius* cos(i*(2 * PI) / num_triangles)),
+				y + (radius * sin(i*(2 * PI) / num_triangles)));
+		}
+		glEnd();
+		glFlush();
+	
+}
+void DrawD(void) {
+	DrawDiamond(T[0].x, T[0].y, r);
+}
+void DrawT(void) {
+	DrawTriangle(T[0].x, T[0].y, r);
+}
+void DrawC(void) {
+	DrawCircle(T[0].x, T[0].y, r);
+}
+void DrawS() {
+	if (Square == true) {
+		glBegin(GL_POLYGON);
+
+		glVertex2i(T[0].x - r, T[0].y - r);
+		glVertex2i(T[0].x + r, T[0].y - r);
+		glVertex2i(T[0].x + r, T[0].y + r);
+		glVertex2i(T[0].x - r, T[0].y + r);
+		glEnd();
+		glFlush();
+
+	}
+}
+int count = 0;
+void Canvas(void) {
+	if (count == 0) {
+		glClear(GL_COLOR_BUFFER_BIT);
+	}
+	count++;
+	glFlush();
+}
+
+void myMouse(int button, int state, int x, int y)
+{
+	// Getting the corners for the program
+	if (button == GLUT_LEFT_BUTTON && state == GLUT_DOWN && SprayPaint != true)
+	{
+
+		T[0].x = x; // Upper Left
+		T[0].y = 480 - y;
+		if (Diamond == true) DrawD();
+		if (Triangle == true) DrawT();
+		if (Square == true) DrawS();
+		if (Circle == true) DrawC();
+
+	}
+}
+
+// MENU
+void ForceFalse() {
+	Square = false;
+	Diamond = false;
+	Circle = false;
+	Triangle = false;
+	SprayPaint = false;
+}
+void processColorEvents(int option)
+{
+
+	switch (option)
+	{
+	case RED:
+		glColor3f(1.0, 0.0, 0.0);
+		break;
+	case GREEN:
+		glColor3f(0.0, 1.0, 0.0);
+		break;
+	case BLUE:
+		glColor3f(0.0, 0.0, 1.0);
+		break;
+	case YELLOW:
+		glColor3f(1.0, 1.0, 0.0);
+		break;
+	case PURPLE:
+		glColor3f(1.0, 0.0, 1.0);
+		break;
+	case ORANGE:
+		glColor3f(1.0, 0.5, 0.0);
+		break;
+	case WHITE:
+		glColor3f(1.0, 1.0, 1.0);
+		break;
+	case BLACK:
+		glColor3f(0.0, 0.0, 0.0);
+		break;
+	case CYAN:
+		glColor3f(0.0, 1.0, 1.0);
+		break;
+
+		break;
+	default:
+		break;
+	}
+	glutPostRedisplay();
+}
+
+void processShapeEvents(int option) {
+	switch (option)
+	{
+	case SQUARE:
+		ForceFalse(); Square = true;
+		break;
+	case TRIANGLE:
+		ForceFalse(); Triangle = true;
+		break;
+	case DIAMOND:
+		ForceFalse(); Diamond = true;
+		break;
+	case CIRCLE:
+		ForceFalse(); Circle = true;
+		break;
+	default:
+		break;
+
+	}
+}
+void ChoosingSpray(int option) {
+	switch (option) {
+	case ON:
+		SprayPaint = true;
+		break;
+	case OFF:
+		SprayPaint = false;
+		break;
+	}
+}
+
+void processMainMenu(int option) {
+
+}
+
+void main(int argc, char **argv)
+
+{
+	glutInit(&argc, argv); // initializing windowing toolkit
+	glutInitDisplayMode(GLUT_SINGLE | GLUT_RGB); // set up single buffering, colors
+	glutInitWindowSize(640, 480); // set up window parameters
+	glutInitWindowPosition(100, 150);
+	glutCreateWindow("Paint Program");
+	glutDisplayFunc(Canvas); // registers the display function 
+	glutMouseFunc(myMouse);
+	glutMotionFunc(Spray_Paint);
+	glutKeyboardFunc(myKey);
+	// Color Menu
+	int ColorMenu = glutCreateMenu(processColorEvents);
+	glutAddMenuEntry("Red", RED);
+	glutAddMenuEntry("Green", GREEN);
+	glutAddMenuEntry("Blue", BLUE);
+	glutAddMenuEntry("Yellow", YELLOW);
+	glutAddMenuEntry("Purple", PURPLE);
+	glutAddMenuEntry("Orange", ORANGE);
+	glutAddMenuEntry("White", WHITE);
+	glutAddMenuEntry("Black", BLACK);
+	glutAddMenuEntry("Cyan", CYAN);
+
+	//Shape Menu
+	int ShapeMenu = glutCreateMenu(processShapeEvents);
+	glutAddMenuEntry("Square", SQUARE);
+	glutAddMenuEntry("Triangle", TRIANGLE);
+	glutAddMenuEntry("Diamond", DIAMOND);
+	glutAddMenuEntry("Circle", CIRCLE);
+	//glutAddMenuEntry("Spray", SPRAY);
+
+	int SprayMenu = glutCreateMenu(ChoosingSpray);
+	glutAddMenuEntry("ON", ON);
+	glutAddMenuEntry("OFF", OFF);
+
+	//Main Menu
+	glutCreateMenu(processMainMenu);
+	glutAddSubMenu("Colors", ColorMenu);
+	glutAddSubMenu("Shapes", ShapeMenu);
+	glutAddSubMenu("SprayMenu", SprayMenu);
+
+	glutAttachMenu(GLUT_RIGHT_BUTTON);
+
+	myInit();
+	glutMainLoop();
+}
